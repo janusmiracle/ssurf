@@ -1,5 +1,6 @@
 from typing import List, Protocol, Union
 
+from ._constants import ENCODING_CODES
 from ._types import Source, Stream
 from .chunk import Chunk
 from .chunk_models import (
@@ -88,9 +89,7 @@ class PCMReader:
 
     @property
     def encoding(self) -> str:
-        return ""
-
-    # return ENCODING_CODES.get(self.audio_format, None)
+        return ENCODING_CODES.get(self.audio_format, None)
 
 
 class ExtendedReader(PCMReader):
@@ -135,9 +134,7 @@ class ExtensibleReader(ExtendedReader):
 
     @property
     def encoding(self) -> str:
-        return ""
-
-    # return ENCODING_CODES.get(self.audio_format, None)
+        return ENCODING_CODES.get(self.audio_format, None)
 
 
 class PEXReader(ExtensibleReader):
@@ -325,7 +322,7 @@ class Read:
     @property
     def byteorder(self) -> str:
         """Returns the endianness of the stream."""
-        return self._byteorder
+        return self.identity.endian  # self._byteorder
 
     @property
     def chunk_list(self) -> list:
@@ -340,7 +337,7 @@ class Read:
     @property
     def formtype(self) -> str:
         """Returns the RIFF formtype."""
-        return self._formtype
+        return self.identity.base  # self._formtype
 
     @property
     def identity(self) -> Identity:
@@ -386,8 +383,8 @@ class Read:
                 "encoding": self._reader.encoding,
             },
             "data": {
-                "byte_count": self._chunks["data"][0],
-                "frame_count": int(self._chunks["data"][0] / self._reader.block_align),
+                "byte_count": self._parsed["data"].byte_count,
+                "frame_count": self._parsed["data"].frame_count,
             },
         }
 

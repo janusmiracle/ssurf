@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import List, Optional, Union
 
 from ._types import FourCC, Size, Payload
@@ -56,12 +56,18 @@ class PCMFormat(BaseChunk):
     analysis_rate: Optional[float] = None
     window_param: Optional[float] = None
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}({', '.join(f'{field.name}={getattr(self, field.name)}' for field in fields(self) if getattr(self, field.name) is not None)})"
+
 
 @dataclass
 class ExtendedFormat(PCMFormat):
     """Extended ['fmt '] chunk."""
 
     extension_size: Optional[int] = None  # This can be overridden in PEXFormat
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({', '.join(f'{field.name}={getattr(self, field.name)}' for field in fields(self) if getattr(self, field.name) is not None)})"
 
 
 @dataclass
@@ -72,6 +78,9 @@ class ExtensibleFormat(ExtendedFormat):
     channel_mask: Optional[int] = None  # bitmask
     speaker_layout: Optional[List[str]] = None
     sfmt: Optional[SubFormat] = None
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({', '.join(f'{field.name}={getattr(self, field.name)}' for field in fields(self) if getattr(self, field.name) is not None)})"
 
 
 @dataclass
@@ -90,6 +99,9 @@ class PEXFormat(ExtensibleFormat):
     frame_align: Optional[int] = None
     analysis_rate: Optional[float] = None
     window_param: Optional[float] = None
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({', '.join(f'{field.name}={getattr(self, field.name)}' for field in fields(self) if getattr(self, field.name) is not None)})"
 
 
 @dataclass

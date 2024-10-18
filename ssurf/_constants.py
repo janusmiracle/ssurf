@@ -40,7 +40,7 @@ CF_TYPES = {
 }
 
 # TODO: Update this at some point, too lazy
-CODECS = {
+ENCODING_CODES = {
     0: "Unknown",
     1: "Microsoft PCM (uncompressed)",
     2: "Microsoft ADPCM",
