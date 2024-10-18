@@ -39,12 +39,12 @@ reader.master          # Master RIFF identifier (RIFF, RIFX, RF64, etc.)
 # Methods:
 
 # Chunk retrieval methods
-reader.all()           # Returns all parsed chunks in a dict
-reader.all_raw()       # Returns all raw chunks
-reader.get_chunk(chunk_identifier)   # Returns a specified chunk or None if missing
+reader.all()                            # Returns all parsed chunks in a dict
+reader.all_raw()                        # Returns all raw chunks
+reader.get_chunk(chunk_identifier)      # Returns a specified chunk or None if missing
 reader.get_chunk_raw(chunk_identifier)  # Same as get_chunk() but for raw chunks
-reader.get_summary()   # Returns a summary of format, data, and fact chunks
-reader.has_chunk(chunk_identifier)   # Checks if a specified chunk exists
+reader.get_summary()                    # Returns a summary of [fmt, data, fact]
+reader.has_chunk(chunk_identifier)      # Checks if a specified chunk exists
 
 # PCM Properties (basic WAVE info)
 reader.audio_format    
