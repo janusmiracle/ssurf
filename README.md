@@ -115,6 +115,7 @@ from ssurf import Read, ReaderOptions
 
 source = "rf64-large.wav"
 options = ReaderOptions(ignore_chunks["data", "JUNK", "FLLR", "PAD "])
+reader = Read(source, options)
 
 print(reader.file_size)
 >>> 6260008262
