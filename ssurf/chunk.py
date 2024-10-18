@@ -14,7 +14,7 @@ class Chunk:
     def __init__(
         self,
         stream: Stream,
-        ignore_chunks: List[str] = IGNORE_CHUNKS,
+        ignore_chunks: List[str] = [],
     ):
         self._stream = stream
         self._ignore_chunks = ignore_chunks
@@ -192,7 +192,7 @@ class Chunk:
             # Solves the performance issue (if the user opts in).
             # The stream.read() call on an RF64 file is obscene.
             # The chunk_data is never used after being returned, anyways.
-            if self.ignore_chunks and chunk_identifier in self.ignore_chunks:
+            if chunk_identifier in self.ignore_chunks:
                 chunk_data = b""
             else:
                 chunk_data = self.stream.read(chunk_size)

@@ -87,4 +87,46 @@ reader.beta
 
 ```
 
+The user can control the library's performance, especially when reading chunks from the stream. While the time spent in `stream.read()` is usually negligible, it can be significant in RF64 streams, particularly for large chunks like `data` or `JUNK`.
 
+In this case, you can use `ReaderOptions`. Specifically, the `ignore_chunks` setting.
+
+The below example will be using a 6 billion byte (roughly 6.2GB) RF64 file.
+
+```py 
+from ssurf import Read
+
+# Without any optimizations..
+source = "rf64-large.wav"
+reader = Read(source)
+
+print(reader.file_size)
+>>> 6260008262
+print(reader.get_chunk("data").size)
+>>> 6227020800
+```
+
+As you can see, the size of the `data` chunk is obscene. Running this took around 2.24 seconds.
+
+Now, lets ignore the large `data` chunk.
+
+```py 
+from ssurf import Read, ReaderOptions
+
+source = "rf64-large.wav"
+options = ReaderOptions(ignore_chunks["data", "JUNK", "FLLR", "PAD "])
+
+print(reader.file_size)
+>>> 6260008262
+print(reader.get_chunk("data").size)
+>>> 6227020800
+```
+
+The process took around 5-14ms to run. You can still access the chunk's size even if it's ignored. Ignoring a chunk only skips reading its data, but be cautious when ignoring essential chunks like `fmt `, as this WILL cause errors. Only ignore chunks that are defaulted to `GenericChunk` or `data`.
+
+Any unsupported/unknown/undocumented chunks will automatically default to `GenericChunk`, and return its identifier, size, and byte payload.
+
+```py 
+print(reader.get_chunk("minf"))
+>>> GenericChunk(identifier='minf', size=16, payload=b'8z\x9fkw+\xd5\x01\x01\x00\x00\x00\x00\x00\x00\x00')
+```

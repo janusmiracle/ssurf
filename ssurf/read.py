@@ -12,7 +12,10 @@ from .chunk_models import (
 from .detect import Detect
 from .normalize import normalize_stream
 from .parse import Parse
+from .settings import ReaderOptions
 from .signatures import Identity
+
+DEFAULT_ROPTS = ReaderOptions(ignore_chunks=[])
 
 
 class FormatReader(Protocol):
@@ -253,8 +256,9 @@ class PEXReader(ExtensibleReader):
 class Read:
     """Read and retrieve information from a WAVE stream."""
 
-    def __init__(self, source: Source):
+    def __init__(self, source: Source, options: ReaderOptions = DEFAULT_ROPTS):
         self._source = source
+        self._ignore = options.ignore_chunks
         # Validate the stream
         self._identity = self.initialize_validator()
         self._chunks = self.initialize_chunks()
@@ -278,7 +282,7 @@ class Read:
     def initialize_chunks(self):
         """Initializes chunks by reading from the source stream."""
         stream = self.stream
-        chunk = Chunk(stream)
+        chunk = Chunk(stream, ignore_chunks=self._ignore)
         chunks = {}
         # ignore = False
         to_parse = []
