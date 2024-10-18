@@ -8,7 +8,10 @@ from .chunk_models import (
     PCMFormat,
     PEXFormat,
 )
+from .detect import Detect
 from .normalize import normalize_stream
+from .parse import Parse
+from .signatures import Identity
 
 
 class FormatReader(Protocol):
@@ -255,7 +258,8 @@ class Read:
 
     def __init__(self, source: Source):
         self._source = source
-
+        # Validate the stream
+        self._identity = self.initialize_validator()
         self._chunks = self.initialize_chunks()
         self._parsed = self.initialize_parser()
         self._reader = self.initialize_reader()
@@ -270,9 +274,9 @@ class Read:
         """Returns the size of the WAVE file in bytes."""
         return len(self.stream)
 
-    def initialize_validator(self): ...
-
-    # File signature detection
+    def initialize_validator(self):
+        detect = Detect(self.stream)
+        return detect.detect()
 
     def initialize_chunks(self):
         """Initializes chunks by reading from the source stream."""
@@ -280,8 +284,9 @@ class Read:
         chunk = Chunk(stream)
         chunks = {}
         # ignore = False
-
+        to_parse = []
         for chunk_identifier, chunk_size, chunk_data in chunk.get_chunks():
+            to_parse.append((chunk_identifier, chunk_size, chunk_data))
             chunks[chunk_identifier] = (chunk_size, chunk_data)
 
         self._byteorder = chunk.byteorder
@@ -289,18 +294,31 @@ class Read:
         self._formtype = chunk.formtype
         self._ds64 = chunk.ds64
         self._chunk_identifiers = chunk.chunk_identifiers
+        self._to_parse = to_parse
 
         return chunks
 
-    def initialize_parser(self): ...
+    def initialize_parser(self):
+        parser = Parse(self._to_parse, self._byteorder)
+        parsed = parser.deparse()
 
-    # Parse raw chunks
+        self._mode = parser.mode
+        self._sanity = parser.sanity
 
-    def initialize_reader(self): ...
+        return parsed
 
-    # Set reader based on parser mode
-
-    def initialize(self): ...
+    def initialize_reader(self):
+        format = self._parsed["fmt "]
+        # Could just use class name
+        match self._mode:
+            case "WAVE_FORMAT_PCM":
+                return PCMReader(format)
+            case "WAVE_FORMAT_EXTENDED":
+                return ExtendedReader(format)
+            case "WAVE_FORMAT_EXTENSIBLE":
+                return ExtensibleReader(format)
+            case "WAVE_FORMAT_PVOC_EX":
+                return PEXReader(format)
 
     # --- WAVE-specific accessible information
 
@@ -325,6 +343,10 @@ class Read:
         return self._formtype
 
     @property
+    def identity(self) -> Identity:
+        return self._identity
+
+    @property
     def is_extensible(self) -> bool:
         """Returns whether the WAVE file is an extensible format."""
         return isinstance(self._reader, ExtensibleReader)
@@ -336,7 +358,7 @@ class Read:
 
     def all(self) -> dict:
         """Returns all parsed chunks from the stream."""
-        return {}
+        return self._parsed
 
     def all_raw(self) -> dict:
         """Returns all raw chunks from the stream."""
@@ -344,7 +366,7 @@ class Read:
 
     def get_chunk(self, chunk_identifier: str) -> Union[tuple, None]:
         """Returns the parsed specified chunk."""
-        return ()
+        return self._parsed.get(chunk_identifier, None)
 
     def get_chunk_raw(self, chunk_identifier: str) -> Union[tuple, None]:
         """Returns the unparsed specified chunk."""
@@ -352,8 +374,33 @@ class Read:
 
     def get_summary(self) -> dict:
         """Returns a summary of the WAVE format and data chunk."""
-        # Include byte_count and frame_count?
-        return {}
+        summary = {
+            "format_info": {
+                "audio_format": self._reader.audio_format,
+                "num_channels": self._reader.num_channels,
+                "sample_rate": self._reader.sample_rate,
+                "byte_rate": self._reader.byte_rate,
+                "block_align": self._reader.block_align,
+                "bits_per_sample": self._reader.bits_per_sample,
+                "bit_depth": self._reader.bit_depth,
+                "encoding": self._reader.encoding,
+            },
+            "data": {
+                "byte_count": self._chunks["data"][0],
+                "frame_count": int(self._chunks["data"][0] / self._reader.block_align),
+            },
+        }
+
+        # Add 'samples' from 'fact' if it exists
+        if "fact" in self._chunks:
+            fact_chunk = self._parsed["fact"]
+            summary["fact"] = {
+                "samples": (
+                    fact_chunk.samples if hasattr(fact_chunk, "samples") else None
+                )
+            }
+
+        return summary
 
     def has_chunk(self, chunk_identifier: str) -> bool:
         """Returns whether the specified chunk exists in the WAVE stream."""
