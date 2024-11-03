@@ -76,12 +76,10 @@ class Parse:
 
             # Decode each payload
             match identifier:
-                case "acid":  # Explicitly using string constants
+                case "acid":
                     true_chunks[ACID_IDENTIFIER] = ckdec.decode_acid(payload)
 
-                case (
-                    "aXML" | "iXML" | "_PMX"
-                ):  # Explicitly matching multiple string constants
+                case "aXML" | "iXML" | "_PMX":
                     true_chunks[identifier] = ckdec.decode_xml(payload)
 
                 case "bext":

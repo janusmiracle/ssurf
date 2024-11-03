@@ -398,7 +398,7 @@ class CKDecoder:
         analysis_rate = None
         window_param = None
 
-        mode = None
+        mode = WAVE_FORMAT_PCM  # Default to PCM
 
         if audio_format != 1 and size == 16:
             location = f"{FORMAT_CHUNK_LOCATION} -- AUDIO FORMAT / SIZE"
